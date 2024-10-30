@@ -1,1 +1,1 @@
-python main.py config.toml --database.port=1111 --database.username=new_user
+python main.py config.toml --database.port=1111 --database.username=new_user --aaa.param1=new_value

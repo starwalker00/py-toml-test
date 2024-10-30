@@ -1,26 +1,22 @@
 import argparse
 import toml
+import config_functions  # Importer le module contenant les fonctions de configuration
 
 def parse_overrides(overrides):
-    """Convertit les arguments de type --clé.sous_clé=valeur en dictionnaire imbriqué"""
+    """Convertit les arguments de type --clé.sous_clé=valeur en dictionnaire imbriqué."""
     update_dict = {}
     for override in overrides:
-        # Séparer clé et valeur par le premier signe "="
         key_path, value = override.split("=", 1)
         
-        # Convertir la valeur en type approprié (int, float, str) si possible
         try:
             value = int(value)
         except ValueError:
             try:
                 value = float(value)
             except ValueError:
-                pass  # Reste une string si ce n'est pas un nombre
+                pass  # Laisser la valeur en tant que chaîne si elle n'est ni un int ni un float
         
-        # Gérer les clés imbriquées comme database.port
         keys = key_path.lstrip("-").split(".")
-        
-        # Créer une référence temporaire au dictionnaire
         d = update_dict
         for key in keys[:-1]:
             if key not in d:
@@ -31,7 +27,7 @@ def parse_overrides(overrides):
     return update_dict
 
 def deep_update(source, updates):
-    """Mise à jour récursive du dictionnaire source avec les valeurs du dictionnaire updates"""
+    """Mise à jour récursive du dictionnaire source avec les valeurs du dictionnaire updates."""
     for key, value in updates.items():
         if isinstance(value, dict) and key in source:
             deep_update(source[key], value)
@@ -53,8 +49,15 @@ def main():
     overrides = parse_overrides(args.overrides)
     deep_update(config_data, overrides)
 
-    # Afficher la configuration finale (ou sauvegarder dans un fichier si nécessaire)
-    print(toml.dumps(config_data))
+    # Parcourir chaque section de la configuration et appeler la fonction correspondante
+    for section, params in config_data.items():
+        # Vérifier si une fonction du même nom existe dans config_functions
+        func = getattr(config_functions, section, None)
+        if callable(func):
+            print(f"Appel de la fonction '{section}' avec les paramètres : {params}")
+            func(params)
+        else:
+            print(f"Aucune fonction trouvée pour la section '{section}'")
 
 if __name__ == "__main__":
     main()
