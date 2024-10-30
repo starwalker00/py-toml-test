@@ -1,7 +1,17 @@
 import argparse
 import toml
 import inspect
+import logging
 import config_functions  # Importer le module contenant les fonctions de configuration
+
+# Configuration du logger
+def setup_logger(log_level):
+    """Configure le logger."""
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    return logging.getLogger(__name__)
 
 def parse_overrides(overrides):
     """Convertit les arguments de type --clé.sous_clé=valeur en dictionnaire imbriqué."""
@@ -86,25 +96,27 @@ def main():
 
     # Extraire la section 'global' après avoir appliqué les overrides
     global_config = config_data.pop('global', {})  # Supprime la section 'global' et la stocke
-    log_level = global_config.get('log_level', 'INFO')  # Valeur par défaut à 'INFO'
+    log_level = global_config.get('log_level', 'INFO').upper()  # Valeur par défaut à 'INFO'
     max_connections = global_config.get('max_connections', 10)  # Valeur par défaut à 10
 
-    print(f"Niveau de log global: {log_level}")
-    print(f"Nombre maximal de connexions: {max_connections}")
+    # Configurer le logger
+    logger = setup_logger(log_level)
+    logger.info(f"Niveau de log global: {log_level}")
+    logger.info(f"Nombre maximal de connexions: {max_connections}")
 
     # Valider tous les paramètres avant d'appeler les fonctions
     errors = validate_all_params(config_data)
     if errors:
         # Afficher toutes les erreurs sans exécuter les fonctions
         for error in errors:
-            print(f"Erreur : {error}")
+            logger.error(f"Erreur : {error}")
         raise ValueError("Des paramètres non valides ont été détectés dans la configuration.")
     
     # Si tout est valide, appeler les fonctions
     for section, params in config_data.items():
         func = getattr(config_functions, section, None)
         if callable(func):
-            print(f"Appel de la fonction '{section}' avec les paramètres : {params}")
+            logger.info(f"Appel de la fonction '{section}' avec les paramètres : {params}")
             func(**params)
 
 if __name__ == "__main__":
