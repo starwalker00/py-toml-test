@@ -1,5 +1,6 @@
 import argparse
 import toml
+import inspect
 import config_functions  # Importer le module contenant les fonctions de configuration
 
 def parse_overrides(overrides):
@@ -34,6 +35,17 @@ def deep_update(source, updates):
         else:
             source[key] = value
 
+def validate_params(func, params):
+    """Vérifie que tous les paramètres fournis sont acceptés par la fonction, sinon lève une erreur."""
+    sig = inspect.signature(func)
+    accepted_params = set(sig.parameters.keys())
+    provided_params = set(params.keys())
+
+    # Trouver les paramètres non acceptés
+    invalid_params = provided_params - accepted_params
+    if invalid_params:
+        raise ValueError(f"Les paramètres non acceptés pour la fonction '{func.__name__}': {invalid_params}")
+
 def main():
     parser = argparse.ArgumentParser(description="Script de configuration avec surcharge via ligne de commande")
     parser.add_argument("config_path", type=str, help="Chemin du fichier de configuration TOML")
@@ -54,8 +66,12 @@ def main():
         # Vérifier si une fonction du même nom existe dans config_functions
         func = getattr(config_functions, section, None)
         if callable(func):
+            # Valider les paramètres
+            validate_params(func, params)
+
+            # Appeler la fonction avec les paramètres valides
             print(f"Appel de la fonction '{section}' avec les paramètres : {params}")
-            func(params)
+            func(**params)
         else:
             print(f"Aucune fonction trouvée pour la section '{section}'")
 
