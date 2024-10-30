@@ -8,3 +8,4 @@ param1 = "valeur1"
 
 [bbb]
 param1 = "autre valeur"
+param3 = "toml"

@@ -12,7 +12,8 @@
             "args": [
                 "config.toml",
                 "--database.port=1111",
-                "--database.username=new_user"
+                "--database.username=new_user",
+                "--bbb.param3=commande",
             ],
             "console": "integratedTerminal",
             "justMyCode": true,

@@ -35,6 +35,23 @@ def deep_update(source, updates):
         else:
             source[key] = value
 
+def validate_params(func, params):
+    """Vérifie que tous les paramètres fournis sont acceptés par la fonction, et que les obligatoires sont présents."""
+    sig = inspect.signature(func)
+    accepted_params = set(sig.parameters.keys())
+    provided_params = set(params.keys())
+    
+    # Trouver les paramètres non acceptés
+    invalid_params = provided_params - accepted_params
+    if invalid_params:
+        raise ValueError(f"Les paramètres non acceptés pour la fonction '{func.__name__}': {invalid_params}")
+
+    # Vérifier les paramètres obligatoires
+    required_params = {key for key, value in sig.parameters.items() if value.default is inspect.Parameter.empty}
+    missing_required = required_params - provided_params
+    if missing_required:
+        raise ValueError(f"Fonction '{func.__name__}' manque les paramètres obligatoires: {missing_required}")
+
 def validate_all_params(config_data):
     """Valide tous les paramètres pour chaque fonction de configuration. Retourne une liste d'erreurs."""
     errors = []
@@ -42,13 +59,10 @@ def validate_all_params(config_data):
         # Vérifier si une fonction du même nom existe dans config_functions
         func = getattr(config_functions, section, None)
         if callable(func):
-            sig = inspect.signature(func)
-            accepted_params = set(sig.parameters.keys())
-            provided_params = set(params.keys())
-            invalid_params = provided_params - accepted_params
-            
-            if invalid_params:
-                errors.append(f"Section '{section}': paramètres non acceptés {invalid_params}")
+            try:
+                validate_params(func, params)
+            except ValueError as e:
+                errors.append(str(e))
         else:
             errors.append(f"Aucune fonction trouvée pour la section '{section}'")
     return errors
