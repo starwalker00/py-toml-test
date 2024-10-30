@@ -41,7 +41,7 @@ def deep_update(source, updates):
 def main():
     parser = argparse.ArgumentParser(description="Script de configuration avec surcharge via ligne de commande")
     parser.add_argument("config_path", type=str, help="Chemin du fichier de configuration TOML")
-    parser.add_argument("overrides", nargs="*", help="Arguments de surcharge au format --clé.sous_clé=valeur")
+    parser.add_argument("overrides", nargs=argparse.REMAINDER, help="Arguments de surcharge au format --clé.sous_clé=valeur")
 
     args = parser.parse_args()
 
