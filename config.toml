@@ -1,3 +1,7 @@
+[global]
+log_level = "DEBUG"
+max_connections = 100
+
 [database]
 server = "localhost"
 port = 5432

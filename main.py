@@ -9,6 +9,7 @@ def parse_overrides(overrides):
     for override in overrides:
         key_path, value = override.split("=", 1)
         
+        # Conversion du type de la valeur
         try:
             value = int(value)
         except ValueError:
@@ -17,6 +18,7 @@ def parse_overrides(overrides):
             except ValueError:
                 pass  # Laisser la valeur en tant que chaîne si elle n'est ni un int ni un float
         
+        # Création du dictionnaire imbriqué
         keys = key_path.lstrip("-").split(".")
         d = update_dict
         for key in keys[:-1]:
@@ -81,6 +83,14 @@ def main():
     # Analyser et appliquer les overrides
     overrides = parse_overrides(args.overrides)
     deep_update(config_data, overrides)
+
+    # Extraire la section 'global' après avoir appliqué les overrides
+    global_config = config_data.pop('global', {})  # Supprime la section 'global' et la stocke
+    log_level = global_config.get('log_level', 'INFO')  # Valeur par défaut à 'INFO'
+    max_connections = global_config.get('max_connections', 10)  # Valeur par défaut à 10
+
+    print(f"Niveau de log global: {log_level}")
+    print(f"Nombre maximal de connexions: {max_connections}")
 
     # Valider tous les paramètres avant d'appeler les fonctions
     errors = validate_all_params(config_data)
