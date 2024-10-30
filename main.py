@@ -35,16 +35,23 @@ def deep_update(source, updates):
         else:
             source[key] = value
 
-def validate_params(func, params):
-    """Vérifie que tous les paramètres fournis sont acceptés par la fonction, sinon lève une erreur."""
-    sig = inspect.signature(func)
-    accepted_params = set(sig.parameters.keys())
-    provided_params = set(params.keys())
-
-    # Trouver les paramètres non acceptés
-    invalid_params = provided_params - accepted_params
-    if invalid_params:
-        raise ValueError(f"Les paramètres non acceptés pour la fonction '{func.__name__}': {invalid_params}")
+def validate_all_params(config_data):
+    """Valide tous les paramètres pour chaque fonction de configuration. Retourne une liste d'erreurs."""
+    errors = []
+    for section, params in config_data.items():
+        # Vérifier si une fonction du même nom existe dans config_functions
+        func = getattr(config_functions, section, None)
+        if callable(func):
+            sig = inspect.signature(func)
+            accepted_params = set(sig.parameters.keys())
+            provided_params = set(params.keys())
+            invalid_params = provided_params - accepted_params
+            
+            if invalid_params:
+                errors.append(f"Section '{section}': paramètres non acceptés {invalid_params}")
+        else:
+            errors.append(f"Aucune fonction trouvée pour la section '{section}'")
+    return errors
 
 def main():
     parser = argparse.ArgumentParser(description="Script de configuration avec surcharge via ligne de commande")
@@ -61,19 +68,20 @@ def main():
     overrides = parse_overrides(args.overrides)
     deep_update(config_data, overrides)
 
-    # Parcourir chaque section de la configuration et appeler la fonction correspondante
+    # Valider tous les paramètres avant d'appeler les fonctions
+    errors = validate_all_params(config_data)
+    if errors:
+        # Afficher toutes les erreurs sans exécuter les fonctions
+        for error in errors:
+            print(f"Erreur : {error}")
+        raise ValueError("Des paramètres non valides ont été détectés dans la configuration.")
+    
+    # Si tout est valide, appeler les fonctions
     for section, params in config_data.items():
-        # Vérifier si une fonction du même nom existe dans config_functions
         func = getattr(config_functions, section, None)
         if callable(func):
-            # Valider les paramètres
-            validate_params(func, params)
-
-            # Appeler la fonction avec les paramètres valides
             print(f"Appel de la fonction '{section}' avec les paramètres : {params}")
             func(**params)
-        else:
-            print(f"Aucune fonction trouvée pour la section '{section}'")
 
 if __name__ == "__main__":
     main()
