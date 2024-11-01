@@ -14,20 +14,14 @@ def setup_logger(log_level):
     return logging.getLogger(__name__)
 
 def parse_overrides(overrides):
-    """Convertit les arguments de type --clé.sous_clé=valeur en dictionnaire imbriqué."""
+    """Convertit les arguments de type --clé.sous_clé=valeur en dictionnaire imbriqué en utilisant toml."""
     update_dict = {}
     for override in overrides:
         key_path, value = override.split("=", 1)
-        
-        # Conversion du type de la valeur
-        try:
-            value = int(value)
-        except ValueError:
-            try:
-                value = float(value)
-            except ValueError:
-                pass  # Laisser la valeur en tant que chaîne si elle n'est ni un int ni un float
-        
+
+        # Utilise toml.loads pour interpréter le type de la valeur
+        value = toml.loads(f"key = {value}")["key"]
+
         # Création du dictionnaire imbriqué
         keys = key_path.lstrip("-").split(".")
         d = update_dict
